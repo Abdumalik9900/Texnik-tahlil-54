@@ -1,6 +1,6 @@
 
 import yfinance as yf
-import talib as ta
+import ta
 import pandas as pd
 import numpy as np
 from telegram import Bot
