@@ -1,58 +1,51 @@
-
 import yfinance as yf
 import ta
-import pandas as pd
-import numpy as np
-from telegram import Bot
-from telegram.ext import Updater, CommandHandler
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-TELEGRAM_API_TOKEN = "TELEGRAM_API_TOKEN"
-# Swing trade botning funksiyasi
+TELEGRAM_API_TOKEN = "YOUR_TELEGRAM_API_TOKEN"
+
+# Texnik tahlil funktsiyasi
 def swing_trade_analysis(symbol):
-    # Aksiya ma'lumotlarini olish
-    data = yf.download(symbol, period="7d", interval="1h")  # 7 kunlik ma'lumotlar, har 1 soatda yangilanadi
+    data = yf.download(symbol, period="7d", interval="1h")
 
-    # Yopilish narxlarini olish
+    if data.empty or len(data) < 50:
+        return f"{symbol} uchun yetarli ma'lumot yo'q."
+
     close = data['Close']
 
-    # Simple Moving Average (SMA) hisoblash
-    sma_20 = ta.SMA(close, timeperiod=20)
-    sma_50 = ta.SMA(close, timeperiod=50)
+    # 'ta' kutubxonasi yordamida SMA hisoblash
+    sma_20 = close.rolling(window=20).mean()
+    sma_50 = close.rolling(window=50).mean()
 
-    # Signalni aniqlash
-    if sma_20[-1] > sma_50[-1]:
-        return f"{symbol} uchun sotib olish signal: SMA 20 > SMA 50"
-    elif sma_20[-1] < sma_50[-1]:
-        return f"{symbol} uchun sotish signal: SMA 20 < SMA 50"
+    if sma_20.iloc[-1] > sma_50.iloc[-1]:
+        return f"{symbol} uchun 🟢 **Sotib olish signali**: SMA 20 > SMA 50"
+    elif sma_20.iloc[-1] < sma_50.iloc[-1]:
+        return f"{symbol} uchun 🔴 **Sotish signali**: SMA 20 < SMA 50"
     else:
-        return f"{symbol} uchun signal yo'q."
+        return f"{symbol} uchun neytral signal."
 
-# Telegram xabarini yuborish
-def start(update, context):
-    update.message.reply_text("Salom! Aksiya tahlili uchun `symbol`ni kiriting. Masalan, `NVDA`.")
+# /start komandasi
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Salom! Aksiya tahlili uchun simbol kiriting. Masalan: /analyze NVDA")
 
-def analyze(update, context):
+# /analyze komandasi
+async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
-        symbol = context.args[0]
+        symbol = context.args[0].upper()
         result = swing_trade_analysis(symbol)
-        update.message.reply_text(result)
+        await update.message.reply_text(result)
     else:
-        update.message.reply_text("Iltimos, aksiyaning simbolini kiriting, masalan: `/analyze NVDA`.")
+        await update.message.reply_text("Iltimos, aksiyaning simbolini kiriting, masalan: /analyze NVDA")
 
-# Telegram botni sozlash
+# Asosiy ishga tushirish
 def main():
-    updater = Updater(TELEGRAM_API_TOKEN)
-    dispatcher = updater.dispatcher
+    app = ApplicationBuilder().token(TELEGRAM_API_TOKEN).build()
 
-    # Start komandasi
-    dispatcher.add_handler(CommandHandler('start', start))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("analyze", analyze))
 
-    # Analyze komandasi
-    dispatcher.add_handler(CommandHandler('analyze', analyze))
-
-    # Botni ishga tushirish
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
 
 if __name__ == '__main__':
     main()
