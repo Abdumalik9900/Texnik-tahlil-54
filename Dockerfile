@@ -27,4 +27,4 @@ COPY . /app
 WORKDIR /app
 
 # 7. Botni ishga tushirish
-CMD ["python", "swing_trade_bot.py"]
+CMD ["python", "main.py"]
