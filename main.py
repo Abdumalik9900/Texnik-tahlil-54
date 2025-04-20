@@ -6,7 +6,7 @@ import numpy as np
 from telegram import Bot
 from telegram.ext import Updater, CommandHandler
 
-TELEGRAM_API_TOKEN = "8123102770:AAG_h6qiVxSJmNYxSQIUnaQRIQO2MxiRfgE"
+TELEGRAM_API_TOKEN = "TELEGRAM_API_TOKEN"
 # Swing trade botning funksiyasi
 def swing_trade_analysis(symbol):
     # Aksiya ma'lumotlarini olish
