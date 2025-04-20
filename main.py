@@ -41,7 +41,7 @@ def analyze(update, context):
 
 # Telegram botni sozlash
 def main():
-    updater = Updater(TELEGRAM_API_TOKEN, use_context=True)
+    updater = Updater(TELEGRAM_API_TOKEN)
     dispatcher = updater.dispatcher
 
     # Start komandasi
