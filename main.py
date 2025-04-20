@@ -5,7 +5,7 @@ import time
 import asyncio
 
 TOKEN = "8123102770:AAG_h6qiVxSJmNYxSQIUnaQRIQO2MxiRfgE"
-CHAT_ID = "6124148024"  # /start bosgan odamning ID'si
+CHAT_ID = '6124148024'  # /start bosgan odamning ID'si
 
 bot = Bot(token=TOKEN)
 
