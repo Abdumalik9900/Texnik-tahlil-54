@@ -1,34 +1,58 @@
 
 import yfinance as yf
+import talib as ta
+import pandas as pd
+import numpy as np
 from telegram import Bot
-import time
-import asyncio
+from telegram.ext import Updater, CommandHandler
 
-TOKEN = "8123102770:AAG_h6qiVxSJmNYxSQIUnaQRIQO2MxiRfgE"
-CHAT_ID = '6124148024'  # /start bosgan odamning ID'si
+TELEGRAM_API_TOKEN = "8123102770:AAG_h6qiVxSJmNYxSQIUnaQRIQO2MxiRfgE"
+# Swing trade botning funksiyasi
+def swing_trade_analysis(symbol):
+    # Aksiya ma'lumotlarini olish
+    data = yf.download(symbol, period="7d", interval="1h")  # 7 kunlik ma'lumotlar, har 1 soatda yangilanadi
 
-bot = Bot(token=TOKEN)
+    # Yopilish narxlarini olish
+    close = data['Close']
 
-async def check_stock():
-    while True:
-        # Aksiya tanlang (masalan: Apple - AAPL)
-        ticker = yf.Ticker("AAPL")
-        df = ticker.history(period="14d")
+    # Simple Moving Average (SMA) hisoblash
+    sma_20 = ta.SMA(close, timeperiod=20)
+    sma_50 = ta.SMA(close, timeperiod=50)
 
-        close = df['Close']
-        sma = close.rolling(window=10).mean()
-        rsi = 100 - (100 / (1 + (close.pct_change().dropna().mean() / close.pct_change().dropna().std())))
+    # Signalni aniqlash
+    if sma_20[-1] > sma_50[-1]:
+        return f"{symbol} uchun sotib olish signal: SMA 20 > SMA 50"
+    elif sma_20[-1] < sma_50[-1]:
+        return f"{symbol} uchun sotish signal: SMA 20 < SMA 50"
+    else:
+        return f"{symbol} uchun signal yo'q."
 
-        signal = ""
+# Telegram xabarini yuborish
+def start(update, context):
+    update.message.reply_text("Salom! Aksiya tahlili uchun `symbol`ni kiriting. Masalan, `NVDA`.")
 
-        if close[-1] > sma[-1] and rsi < 70:
-            signal = "📈 Ko‘tarilish signali: AAPL narxi 10 kunlik SMA dan yuqori."
-        elif close[-1] < sma[-1] and rsi > 30:
-            signal = "📉 Tushish signali: AAPL narxi 10 kunlik SMA dan past."
+def analyze(update, context):
+    if context.args:
+        symbol = context.args[0]
+        result = swing_trade_analysis(symbol)
+        update.message.reply_text(result)
+    else:
+        update.message.reply_text("Iltimos, aksiyaning simbolini kiriting, masalan: `/analyze NVDA`.")
 
-        if signal:
-            await bot.send_message(chat_id=CHAT_ID, text=signal)
+# Telegram botni sozlash
+def main():
+    updater = Updater(TELEGRAM_API_TOKEN, use_context=True)
+    dispatcher = updater.dispatcher
 
-        await asyncio.sleep(3600)  # 1 soatda bir marta tekshir
+    # Start komandasi
+    dispatcher.add_handler(CommandHandler('start', start))
 
-asyncio.run(check_stock())
+    # Analyze komandasi
+    dispatcher.add_handler(CommandHandler('analyze', analyze))
+
+    # Botni ishga tushirish
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
