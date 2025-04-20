@@ -3,7 +3,7 @@ import ta
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-TELEGRAM_API_TOKEN = "YOUR_TELEGRAM_API_TOKEN"
+TELEGRAM_API_TOKEN = "TELEGRAM_API_TOKEN"
 
 # Texnik tahlil funktsiyasi
 def swing_trade_analysis(symbol):
